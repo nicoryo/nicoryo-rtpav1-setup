@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/common_jp62.sh"
+
 PORT="5004"
 OUT="/tmp/rtpav1_rx.av1"
 LATENCY="100"
@@ -23,8 +27,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+require_jp62
+
 if ! gst-inspect-1.0 rtpav1depay >/dev/null 2>&1; then
-  echo "rtpav1depay not found. Run: source ./scripts/env_rtpav1.sh" >&2
+  echo "rtpav1depay not found. Run: source ./scripts/jp6_2/env_rtpav1.sh" >&2
   exit 1
 fi
 

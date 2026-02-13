@@ -1,4 +1,4 @@
-# Jetson向け GStreamer RTP/AV1 セットアップ手順
+# Jetson向け GStreamer RTP/AV1 セットアップ手順 (JP6.2)
 
 このリポジトリは、Jetson環境で `nvv4l2av1enc` を使ったAV1ハードウェアエンコードと、
 `rtpav1pay` / `rtpav1depay` によるRTP送受信を再現できるようにした手順です。
@@ -8,7 +8,7 @@
 
 ## 対象と前提
 
-- Ubuntu 22.04系 + Jetson Linux (L4T r36系想定)
+- Ubuntu 22.04系 + Jetson Linux **JP6.2 (L4T R36.4.x)**
 - GStreamer 1.20.x
 - NVIDIAエンコーダ要素が利用可能 (`nvv4l2av1enc`)
 - ネットワークアクセスあり (Rust crate取得のため)
@@ -26,8 +26,8 @@ gst-inspect-1.0 nvv4l2av1enc
 
 ```bash
 cd /path/to/nicoryo-rtpav1
-./scripts/setup_rtpav1_local.sh --with-apt
-source ./scripts/env_rtpav1.sh
+./scripts/jp6_2/setup_rtpav1_local.sh --with-apt
+source ./scripts/jp6_2/env_rtpav1.sh
 gst-inspect-1.0 rtpav1pay
 ```
 
@@ -44,16 +44,16 @@ APT変更を避ける場合は `--with-apt` なしで実行してください。
 
 ```bash
 cd /path/to/nicoryo-rtpav1
-source ./scripts/env_rtpav1.sh
-./scripts/run_rtpav1_receiver.sh --port 5004 --out /tmp/rx.av1
+source ./scripts/jp6_2/env_rtpav1.sh
+./scripts/jp6_2/run_rtpav1_receiver.sh --port 5004 --out /tmp/rx.av1
 ```
 
 ### 送信側 (Device A)
 
 ```bash
 cd /path/to/nicoryo-rtpav1
-source ./scripts/env_rtpav1.sh
-./scripts/run_rtpav1_sender.sh --host <RECEIVER_IP> --port 5004 --seconds 30
+source ./scripts/jp6_2/env_rtpav1.sh
+./scripts/jp6_2/run_rtpav1_sender.sh --host <RECEIVER_IP> --port 5004 --seconds 30
 ```
 
 ### 受信データ確認
@@ -68,8 +68,8 @@ gst-launch-1.0 -e filesrc location=/tmp/rx.av1 ! av1parse ! av1dec ! fakesink sy
 
 ```bash
 cd /path/to/nicoryo-rtpav1
-source ./scripts/env_rtpav1.sh
-./scripts/selftest_rtpav1_loopback.sh --seconds 20
+source ./scripts/jp6_2/env_rtpav1.sh
+./scripts/jp6_2/selftest_rtpav1_loopback.sh --seconds 20
 ```
 
 成功時は `/tmp/rtpav1_loopback_rx.av1` が生成され、デコード確認まで行います。
@@ -85,9 +85,18 @@ source ./scripts/env_rtpav1.sh
 
 ## 主要ファイル
 
-- `scripts/setup_rtpav1_local.sh`: ローカル環境セットアップ
-- `scripts/env_rtpav1.sh`: 実行時環境変数 (`GST_PLUGIN_PATH`) 設定
-- `scripts/run_rtpav1_sender.sh`: RTP/AV1送信
-- `scripts/run_rtpav1_receiver.sh`: RTP/AV1受信
-- `scripts/selftest_rtpav1_loopback.sh`: ループバック検証
+- `scripts/jp6_2/setup_rtpav1_local.sh`: ローカル環境セットアップ
+- `scripts/jp6_2/env_rtpav1.sh`: 実行時環境変数 (`GST_PLUGIN_PATH`) 設定
+- `scripts/jp6_2/run_rtpav1_sender.sh`: RTP/AV1送信
+- `scripts/jp6_2/run_rtpav1_receiver.sh`: RTP/AV1受信
+- `scripts/jp6_2/selftest_rtpav1_loopback.sh`: ループバック検証
+- `scripts/jp6_2/common_jp62.sh`: JP6.2 (L4T R36.4.x) 判定
 
+## JP6.2判定について
+
+各スクリプトは `/etc/nv_tegra_release` を読み取り、`R36.4.x` (JP6.2) 以外では停止します。  
+検証目的でチェックを無効化したい場合のみ、以下を指定してください。
+
+```bash
+SKIP_JP62_CHECK=1 ./scripts/jp6_2/setup_rtpav1_local.sh
+```

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/common_jp62.sh"
+
 PORT="5200"
 SECONDS="20"
 OUT="/tmp/rtpav1_loopback_rx.av1"
@@ -21,7 +25,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+require_jp62
 
 "$SCRIPT_DIR/run_rtpav1_receiver.sh" --port "$PORT" --out "$OUT" --timeout "$((SECONDS + 10))" &
 RX_PID=$!

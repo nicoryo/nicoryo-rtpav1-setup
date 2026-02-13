@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 BUILD_ROOT="${BUILD_ROOT:-${REPO_ROOT}/.build}"
 GST_RS_DIR="${GST_RS_DIR:-${BUILD_ROOT}/gst-plugins-rs}"
 GST_RS_REF="${GST_RS_REF:-111f98cc80c8225da956e588cb0dfe79484b49f4}"
 WITH_APT=0
+
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/common_jp62.sh"
 
 usage() {
   cat <<USAGE
@@ -23,6 +27,8 @@ for arg in "$@"; do
     *) echo "Unknown arg: $arg"; usage; exit 1 ;;
   esac
 done
+
+require_jp62
 
 if [[ "$WITH_APT" -eq 1 ]]; then
   sudo apt-get update
@@ -56,16 +62,16 @@ if [[ ! -f "$PLUGIN_SO" ]]; then
   exit 1
 fi
 
-cat > "$REPO_ROOT/scripts/env_rtpav1.sh" <<ENV
+cat > "$REPO_ROOT/scripts/jp6_2/env_rtpav1.sh" <<ENV
 #!/usr/bin/env bash
 export GST_PLUGIN_PATH="$GST_RS_DIR/target/release\${GST_PLUGIN_PATH:+:\$GST_PLUGIN_PATH}"
 ENV
-chmod +x "$REPO_ROOT/scripts/env_rtpav1.sh"
+chmod +x "$REPO_ROOT/scripts/jp6_2/env_rtpav1.sh"
 
 # shellcheck source=/dev/null
-source "$REPO_ROOT/scripts/env_rtpav1.sh"
+source "$REPO_ROOT/scripts/jp6_2/env_rtpav1.sh"
 gst-inspect-1.0 rtpav1pay >/dev/null
 
 echo "Setup complete"
 echo "Plugin: $PLUGIN_SO"
-echo "Use: source $REPO_ROOT/scripts/env_rtpav1.sh"
+echo "Use: source $REPO_ROOT/scripts/jp6_2/env_rtpav1.sh"
