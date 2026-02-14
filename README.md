@@ -74,6 +74,35 @@ source ./scripts/jp6_2/env_rtpav1.sh
 
 成功時は `/tmp/rtpav1_loopback_rx.av1` が生成され、デコード確認まで行います。
 
+## systemdサービス化 (本リポジトリ実装)
+
+常駐運用する場合は、以下のスクリプトでsystemd登録できます。
+
+```bash
+cd /path/to/nicoryo-rtpav1
+./scripts/jp6_2/setup_systemd_service.sh install --mode sender --host <RECEIVER_IP> --port 5004
+```
+
+デフォルトは `sender` モードかつ `--seconds 0`（無期限送信）です。
+
+状態確認:
+
+```bash
+./scripts/jp6_2/setup_systemd_service.sh status
+```
+
+受信常駐として登録する場合:
+
+```bash
+./scripts/jp6_2/setup_systemd_service.sh install --mode receiver --port 5004 --out /var/tmp/nicoryo-rx.av1
+```
+
+削除:
+
+```bash
+./scripts/jp6_2/setup_systemd_service.sh uninstall
+```
+
 ## 運用時の推奨初期値
 
 - 送信:
@@ -90,6 +119,7 @@ source ./scripts/jp6_2/env_rtpav1.sh
 - `scripts/jp6_2/run_rtpav1_sender.sh`: RTP/AV1送信
 - `scripts/jp6_2/run_rtpav1_receiver.sh`: RTP/AV1受信
 - `scripts/jp6_2/selftest_rtpav1_loopback.sh`: ループバック検証
+- `scripts/jp6_2/setup_systemd_service.sh`: systemd登録/削除/状態確認
 - `scripts/jp6_2/common_jp62.sh`: JP6.2 (L4T R36.4.x) 判定
 
 ## JP6.2判定について
