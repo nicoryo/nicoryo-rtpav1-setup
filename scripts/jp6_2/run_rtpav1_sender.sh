@@ -16,6 +16,9 @@ FPS="30"
 usage() {
   cat <<USAGE
 Usage: $0 [--host IP] [--port N] [--seconds N] [--bitrate BPS]
+
+Notes:
+  --seconds 0 で無期限送信
 USAGE
 }
 
@@ -37,12 +40,21 @@ if ! gst-inspect-1.0 rtpav1pay >/dev/null 2>&1; then
   exit 1
 fi
 
-NUM_BUFFERS=$((SECONDS * FPS))
-
-gst-launch-1.0 -e \
-  videotestsrc is-live=true num-buffers="$NUM_BUFFERS" pattern=ball ! \
-  "video/x-raw,format=I420,width=${WIDTH},height=${HEIGHT},framerate=${FPS}/1" ! \
-  nvvidconv ! "video/x-raw(memory:NVMM),format=NV12" ! \
-  nvv4l2av1enc bitrate="$BITRATE" iframeinterval=30 idrinterval=30 ! \
-  av1parse ! rtpav1pay pt=96 mtu=1200 ! \
-  udpsink host="$HOST" port="$PORT" sync=false async=false
+if [[ "$SECONDS" -eq 0 ]]; then
+  gst-launch-1.0 -e \
+    videotestsrc is-live=true pattern=ball ! \
+    "video/x-raw,format=I420,width=${WIDTH},height=${HEIGHT},framerate=${FPS}/1" ! \
+    nvvidconv ! "video/x-raw(memory:NVMM),format=NV12" ! \
+    nvv4l2av1enc bitrate="$BITRATE" iframeinterval=30 idrinterval=30 ! \
+    av1parse ! rtpav1pay pt=96 mtu=1200 ! \
+    udpsink host="$HOST" port="$PORT" sync=false async=false
+else
+  NUM_BUFFERS=$((SECONDS * FPS))
+  gst-launch-1.0 -e \
+    videotestsrc is-live=true num-buffers="$NUM_BUFFERS" pattern=ball ! \
+    "video/x-raw,format=I420,width=${WIDTH},height=${HEIGHT},framerate=${FPS}/1" ! \
+    nvvidconv ! "video/x-raw(memory:NVMM),format=NV12" ! \
+    nvv4l2av1enc bitrate="$BITRATE" iframeinterval=30 idrinterval=30 ! \
+    av1parse ! rtpav1pay pt=96 mtu=1200 ! \
+    udpsink host="$HOST" port="$PORT" sync=false async=false
+fi

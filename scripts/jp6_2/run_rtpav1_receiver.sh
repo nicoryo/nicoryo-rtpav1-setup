@@ -13,6 +13,9 @@ TIMEOUT_SEC="35"
 usage() {
   cat <<USAGE
 Usage: $0 [--port N] [--out PATH] [--latency MS] [--timeout SEC]
+
+Notes:
+  --timeout 0 で無期限受信
 USAGE
 }
 
@@ -36,10 +39,17 @@ fi
 
 rm -f "$OUT"
 
-timeout "${TIMEOUT_SEC}s" gst-launch-1.0 -e \
-  udpsrc port="$PORT" caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=AV1,payload=96" ! \
-  rtpjitterbuffer latency="$LATENCY" do-lost=true post-drop-messages=true ! \
-  rtpav1depay ! av1parse ! filesink location="$OUT" || true
+if [[ "$TIMEOUT_SEC" -eq 0 ]]; then
+  gst-launch-1.0 -e \
+    udpsrc port="$PORT" caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=AV1,payload=96" ! \
+    rtpjitterbuffer latency="$LATENCY" do-lost=true post-drop-messages=true ! \
+    rtpav1depay ! av1parse ! filesink location="$OUT" || true
+else
+  timeout "${TIMEOUT_SEC}s" gst-launch-1.0 -e \
+    udpsrc port="$PORT" caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=AV1,payload=96" ! \
+    rtpjitterbuffer latency="$LATENCY" do-lost=true post-drop-messages=true ! \
+    rtpav1depay ! av1parse ! filesink location="$OUT" || true
+fi
 
 if [[ -s "$OUT" ]]; then
   echo "Received: $OUT"

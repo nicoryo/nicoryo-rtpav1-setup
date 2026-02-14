@@ -54,7 +54,10 @@ fi
 git -C "$GST_RS_DIR" fetch --all --tags
 git -C "$GST_RS_DIR" checkout "$GST_RS_REF"
 
-cargo -C "$GST_RS_DIR" build -p gst-plugin-rtp --release -j"$(nproc)"
+(
+  cd "$GST_RS_DIR"
+  cargo build -p gst-plugin-rtp --release -j"$(nproc)"
+)
 
 PLUGIN_SO="$GST_RS_DIR/target/release/libgstrsrtp.so"
 if [[ ! -f "$PLUGIN_SO" ]]; then
