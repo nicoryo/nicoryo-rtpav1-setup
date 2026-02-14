@@ -31,6 +31,73 @@ source ./scripts/jp6_2/env_rtpav1.sh
 gst-inspect-1.0 rtpav1pay
 ```
 
+## x86 Ubuntuで`rtpav1depay`のみ導入する場合
+
+```bash
+cd /path/to/nicoryo-rtpav1
+./scripts/x86_ubuntu/setup_rtpav1depay.sh
+source ./scripts/x86_ubuntu/env_rtpav1.sh
+gst-inspect-1.0 rtpav1depay
+```
+
+## x86 Ubuntu検証済みパイプライン
+
+検証環境:
+- Ubuntu 22.04 x86_64
+- GStreamer 1.20.3
+- `rtpav1depay` は `scripts/x86_ubuntu/setup_rtpav1depay.sh` で導入
+
+要素確認:
+
+```bash
+source ./scripts/x86_ubuntu/env_rtpav1.sh
+gst-inspect-1.0 rtpav1depay
+gst-inspect-1.0 av1dec
+```
+
+受信再生 (検証済み):
+
+```bash
+source ./scripts/x86_ubuntu/env_rtpav1.sh
+./scripts/x86_ubuntu/run_rtpav1_receiver.sh --port 5504 --payload 97
+```
+
+同等の`gst-launch-1.0`コマンド:
+
+```bash
+gst-launch-1.0 -v \
+  udpsrc port=5504 caps="application/x-rtp,media=video,encoding-name=AV1,payload=97,clock-rate=90000" ! \
+  rtpjitterbuffer latency=100 ! rtpav1depay ! av1parse ! av1dec ! videoconvert ! autovideosink sync=false
+```
+
+デコードのみ確認したい場合:
+
+```bash
+gst-launch-1.0 -v \
+  udpsrc port=5504 caps="application/x-rtp,media=video,encoding-name=AV1,payload=97,clock-rate=90000" ! \
+  rtpjitterbuffer latency=100 ! rtpav1depay ! av1parse ! av1dec ! fakesink
+```
+
+## `libgstkvssink.so` 警告を抑えるクリーンアップ
+
+以下の警告が出る環境向けの任意対応です:
+
+```text
+Failed to load plugin ... libgstkvssink.so: libKinesisVideoProducer.so: cannot open shared object file
+```
+
+`kvssink`を使わない場合は無効化できます:
+
+```bash
+./scripts/x86_ubuntu/cleanup_gst_warnings.sh
+```
+
+戻す場合:
+
+```bash
+./scripts/x86_ubuntu/cleanup_gst_warnings.sh --restore
+```
+
 `--with-apt` は以下をインストールします (sudo必要):
 - `nvidia-l4t-gstreamer`
 - `build-essential pkg-config git curl ca-certificates`
@@ -121,6 +188,9 @@ cd /path/to/nicoryo-rtpav1
 - `scripts/jp6_2/selftest_rtpav1_loopback.sh`: ループバック検証
 - `scripts/jp6_2/setup_systemd_service.sh`: systemd登録/削除/状態確認
 - `scripts/jp6_2/common_jp62.sh`: JP6.2 (L4T R36.4.x) 判定
+- `scripts/x86_ubuntu/setup_rtpav1depay.sh`: x86 Ubuntu向け `rtpav1depay` 導入
+- `scripts/x86_ubuntu/run_rtpav1_receiver.sh`: x86 Ubuntu向け RTP/AV1受信 (既定デコーダ: `av1dec`)
+- `scripts/x86_ubuntu/cleanup_gst_warnings.sh`: `libgstkvssink.so` 警告の任意クリーンアップ
 
 ## JP6.2判定について
 
